@@ -329,7 +329,7 @@ const NewTutorial = ({ viewModal, onSidebarClick, viewCallback, active }) => {
                 style={{
                   background: "white",
                   width: "auto",
-                  height:"80%",
+                  height: "80%"
                 }}
               >
                 <img
@@ -338,7 +338,7 @@ const NewTutorial = ({ viewModal, onSidebarClick, viewCallback, active }) => {
                   style={{
                     width: "100%",
                     height: "100%",
-                    objectFit:"contain",
+                    objectFit: "contain"
                   }}
                 />
               </div>
