@@ -21,6 +21,12 @@ import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import { useDispatch, useSelector } from "react-redux";
 import { useFirebase, useFirestore } from "react-redux-firebase";
 import { getUserProfileData } from "../../store/actions";
+import handleLike from "../../services/likeService";
+import handleDislike from "../../services/dislikeService";
+import {
+  checkExistingFeedback,
+  getVotesData
+} from "../../store/actions/tutorialsActions";
 const useStyles = makeStyles(theme => ({
   root: {
     margin: "0.5rem",
@@ -62,22 +68,26 @@ const useStyles = makeStyles(theme => ({
   },
   settings: {
     flexWrap: "wrap"
+  },
+  voteBtn: {
+    transition: "color 0.3s ease-in-out"
   }
 }));
 
 export default function CardWithoutPicture({ tutorial }) {
   const classes = useStyles();
   const [alignment, setAlignment] = React.useState("left");
-  const [count, setCount] = useState(1);
+  const [feedback, setFeedback] = useState(0);
   const dispatch = useDispatch();
   const firebase = useFirebase();
   const firestore = useFirestore();
-  const handleIncrement = () => {
-    setCount(count + 1);
+  const userId = useSelector(state => state.firebase.auth.uid);
+  const handleIncrement = async () => {
+    await handleLike(firebase, firestore, dispatch, tutorial?.tutorial_id);
   };
 
-  const handleDecrement = () => {
-    setCount(count - 1);
+  const handleDecrement = async () => {
+    await handleDislike(firebase, firestore, dispatch, tutorial?.tutorial_id);
   };
 
   const handleAlignment = (event, newAlignment) => {
@@ -88,6 +98,10 @@ export default function CardWithoutPicture({ tutorial }) {
     getUserProfileData(tutorial?.created_by)(firebase, firestore, dispatch);
   }, [tutorial]);
 
+  useEffect(() => {
+    getVotesData(tutorial?.tutorial_id)(firebase, firestore, dispatch);
+  }, [firebase, firestore, dispatch, tutorial]);
+
   const user = useSelector(
     ({
       profile: {
@@ -96,9 +110,26 @@ export default function CardWithoutPicture({ tutorial }) {
     }) => data
   );
 
+  const votes = useSelector(
+    state => state.tutorials.vote.votes[tutorial.tutorial_id] || {}
+  );
+
   const getTime = timestamp => {
     return timestamp.toDate().toDateString();
   };
+
+  useEffect(() => {
+    const fetchFeedback = async () => {
+      const get_feedback = await checkExistingFeedback(
+        userId,
+        tutorial?.tutorial_id
+      )(firebase, firestore, dispatch);
+      if (get_feedback != undefined) {
+        setFeedback(get_feedback);
+      }
+    };
+    fetchFeedback();
+  }, [firebase, firestore, dispatch, tutorial, votes]);
 
   return (
     <Card className={classes.root} data-testId="codelabz">
@@ -187,21 +218,24 @@ export default function CardWithoutPicture({ tutorial }) {
           aria-label="text alignment"
         >
           <ToggleButton
-            className={classes.small}
+            className={`${classes.small} ${classes.voteBtn}`}
             onClick={handleIncrement}
             value="left"
             aria-label="left aligned"
+            selected={feedback === 1 ? true : false}
           >
             <KeyboardArrowUpIcon />
-            <span>{count}</span>
+            <span>{votes.upvotes}</span>
           </ToggleButton>
           <ToggleButton
-            className={classes.small}
+            className={`${classes.small} ${classes.voteBtn}`}
             onClick={handleDecrement}
             value="center"
             aria-label="centered"
+            selected={feedback === -1 ? true : false}
           >
             <KeyboardArrowDownIcon />
+            <span>{votes.downvotes == 0 ? "" : votes.downvotes}</span>
           </ToggleButton>
         </ToggleButtonGroup>
         <IconButton aria-label="share" data-testId="CommentIcon">
