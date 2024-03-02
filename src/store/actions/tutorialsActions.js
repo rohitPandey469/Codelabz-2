@@ -535,7 +535,7 @@ export const setTutorialTheme =
   };
 
 export const checkExistingFeedback =
-  (userId, tutorialId) => async (firebase, firestore, dispatch) => {
+  (userId, tutorialId) => async (firebase, firestore) => {
     try {
       const likeRef = firestore
         .collection("tutorial_likes")
@@ -555,7 +555,7 @@ export const checkExistingFeedback =
   };
 
 export const getVotesData =
-  (tutorialId) => async (firebase, firestore, dispatch) => {
+  tutorialId => async (firebase, firestore, dispatch) => {
     try {
       const tutorialDoc = await firestore
         .collection("tutorials")
