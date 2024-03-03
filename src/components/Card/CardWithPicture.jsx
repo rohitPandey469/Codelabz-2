@@ -89,11 +89,11 @@ export default function CardWithPicture({ tutorial }) {
   const firestore = useFirestore();
   const userId = useSelector(state => state.firebase.auth.uid);
   const handleIncrement = async () => {
-    await handleLike(firebase, firestore, dispatch, tutorial?.tutorial_id);
+    await handleLike(firebase, firestore, dispatch, tutorial?.tutorial_id, "tutorial");
   };
 
   const handleDecrement = async () => {
-    await handleDislike(firebase, firestore, dispatch, tutorial?.tutorial_id);
+    await handleDislike(firebase, firestore, dispatch, tutorial?.tutorial_id, "tutorial");
   };
 
   const handleAlignment = (event, newAlignment) => {
@@ -105,7 +105,7 @@ export default function CardWithPicture({ tutorial }) {
   }, [tutorial]);
 
   useEffect(() => {
-    getVotesData(tutorial?.tutorial_id)(firebase, firestore, dispatch);
+    getVotesData(tutorial?.tutorial_id,"tutorial")(firebase, firestore, dispatch);
   }, [firebase, firestore, dispatch, tutorial]);
 
   const user = useSelector(
@@ -128,7 +128,8 @@ export default function CardWithPicture({ tutorial }) {
     const fetchFeedback = async () => {
       const get_feedback = await checkExistingFeedback(
         userId,
-        tutorial?.tutorial_id
+        tutorial?.tutorial_id,
+        "tutorial_likes"
       )(firebase, firestore, dispatch);
       if (get_feedback != undefined) {
         setFeedback(get_feedback);

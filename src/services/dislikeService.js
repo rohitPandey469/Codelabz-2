@@ -4,14 +4,14 @@ import {
   updateDownvote
 } from "../store/actions";
 
-const handleDislike = async (firebase, firestore, dispatch, tutorialId) => {
+const handleDislike = async (firebase, firestore, dispatch, itemId, itemType) => {
   try {
     const currentUser = firebase.auth().currentUser;
     const userId = currentUser.uid;
     if (!currentUser) {
       return;
     }
-    const existingFeedback = await checkExistingFeedback(userId, tutorialId)(
+    const existingFeedback = await checkExistingFeedback(userId, itemId, `${itemType}_likes`)(
       firebase,
       firestore,
       dispatch
@@ -19,7 +19,7 @@ const handleDislike = async (firebase, firestore, dispatch, tutorialId) => {
     if (existingFeedback === -1) {
       // User already disliked - undo dislike
       console.log("Undo Downvote");
-      await undoVote(userId, tutorialId, existingFeedback)(
+      await undoVote(userId, itemId, itemType, existingFeedback)(
         firebase,
         firestore,
         dispatch
@@ -27,16 +27,16 @@ const handleDislike = async (firebase, firestore, dispatch, tutorialId) => {
     } else if (existingFeedback === 1) {
       // User liked - change like to dislike
       console.log("Change Like to Dislike");
-      await undoVote(userId, tutorialId, existingFeedback)(
+      await undoVote(userId, itemId, itemType, existingFeedback)(
         firebase,
         firestore,
         dispatch
       ); // removed the like
-      await updateDownvote(userId, tutorialId)(firebase, firestore, dispatch); // disliked
+      await updateDownvote(userId, itemId, itemType)(firebase, firestore, dispatch); // disliked
     } else {
       // No previous record - add a new dislike
       console.log("Add a new Dislike");
-      await updateDownvote(userId, tutorialId)(firebase, firestore, dispatch);
+      await updateDownvote(userId, itemId, itemType)(firebase, firestore, dispatch);
     }
   } catch (error) {
     console.log("Error handling Dislike:", error);

@@ -13,7 +13,7 @@ const votesReducer = (state = initialState, { type, payload }) => {
         ...state,
         votes: {
           ...state.votes,
-          [payload.tutorialId]: {
+          [payload.itemId]: {
             upvotes: payload.upvotes,
             downvotes: payload.downvotes
           }
@@ -27,7 +27,7 @@ const votesReducer = (state = initialState, { type, payload }) => {
         ...state,
         votes: {
           ...state.votes,
-          [payload.tutorialId]: {
+          [payload.itemId]: {
             upvotes: payload.upvotes,
             downvotes: payload.downvotes
           }

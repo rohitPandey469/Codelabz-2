@@ -535,11 +535,11 @@ export const setTutorialTheme =
   };
 
 export const checkExistingFeedback =
-  (userId, tutorialId) => async (firebase, firestore) => {
+  (userId, itemId, itemType) => async (firebase, firestore) => {
     try {
       const likeRef = firestore
-        .collection("tutorial_likes")
-        .doc(`${userId}_${tutorialId}`);
+        .collection(itemType) // will work for both comment_likes and tutorial_likes
+        .doc(`${userId}_${itemId}`);
 
       const snapshot = await likeRef.get();
 
@@ -555,17 +555,17 @@ export const checkExistingFeedback =
   };
 
 export const getVotesData =
-  tutorialId => async (firebase, firestore, dispatch) => {
+  (itemId, itemType) => async (firebase, firestore, dispatch) => {
     try {
-      const tutorialDoc = await firestore
-        .collection("tutorials")
-        .doc(tutorialId)
+      const itemDoc = await firestore
+        .collection(`${itemType}s`)
+        .doc(itemId)
         .get();
 
-      const { upvotes, downvotes } = tutorialDoc.data();
+      const { upvotes, downvotes } = itemDoc.data();
       dispatch({
         type: actions.GET_VOTES_DATA_SUCCESS,
-        payload: { tutorialId, upvotes, downvotes }
+        payload: { itemId, itemType, upvotes, downvotes }
       });
     } catch (error) {
       dispatch({ type: actions.GET_VOTES_DATA_FAIL, payload: error.message });
@@ -573,34 +573,37 @@ export const getVotesData =
   };
 
 export const updateUpvote =
-  (userId, tutorialId) => async (firebase, firestore, dispatch) => {
+  (userId, itemId, itemType) => async (firebase, firestore, dispatch) => {
     try {
+      const dataToSet = {
+        uid: userId,
+        value: 1
+      };
+      if (itemType == "tutorial") dataToSet["tut_id"] = itemId;
+      else if (itemType == "comment") dataToSet["comment_id"] = itemId;
+
       await firestore
-        .collection("tutorials")
-        .doc(tutorialId)
+        .collection(`${itemType}s`) // tutorials and comments
+        .doc(itemId)
         .update({
           upvotes: firebase.firestore.FieldValue.increment(1)
         });
 
       await firestore
-        .collection("tutorial_likes")
-        .doc(`${userId}_${tutorialId}`)
-        .set({
-          uid: userId,
-          tut_id: tutorialId,
-          value: 1
-        });
+        .collection(`${itemType}_likes`)
+        .doc(`${userId}_${itemId}`)
+        .set(dataToSet);
 
-      const tutorialDoc = await firestore
-        .collection("tutorials")
-        .doc(tutorialId)
+      const itemDoc = await firestore
+        .collection(`${itemType}s`)
+        .doc(itemId)
         .get();
 
-      const { upvotes, downvotes } = tutorialDoc.data();
+      const { upvotes, downvotes } = itemDoc.data();
 
       dispatch({
         type: actions.UPDATE_UPVOTE_SUCCESS,
-        payload: { tutorialId, upvotes, downvotes }
+        payload: { itemId, itemType, upvotes, downvotes }
       });
     } catch (error) {
       dispatch({ type: actions.UPDATE_UPVOTE_FAIL, payload: error.message });
@@ -608,34 +611,37 @@ export const updateUpvote =
   };
 
 export const updateDownvote =
-  (userId, tutorialId) => async (firebase, firestore, dispatch) => {
+  (userId, itemId, itemType) => async (firebase, firestore, dispatch) => {
     try {
+      const dataToSet = {
+        uid: userId,
+        value: -1
+      };
+      if (itemType == "tutorial") dataToSet["tut_id"] = itemId;
+      else if (itemType == "comment") dataToSet["comment_id"] = itemId;
+
       await firestore
-        .collection("tutorials")
-        .doc(tutorialId)
+        .collection(`${itemType}s`)
+        .doc(itemId)
         .update({
           downvotes: firebase.firestore.FieldValue.increment(1)
         });
 
       await firestore
-        .collection("tutorial_likes")
-        .doc(`${userId}_${tutorialId}`)
-        .set({
-          uid: userId,
-          tut_id: tutorialId,
-          value: -1
-        });
+        .collection(`${itemType}_likes`)
+        .doc(`${userId}_${itemId}`)
+        .set(dataToSet);
 
-      const tutorialDoc = await firestore
-        .collection("tutorials")
-        .doc(tutorialId)
+      const itemDoc = await firestore
+        .collection(`${itemType}s`)
+        .doc(itemId)
         .get();
 
-      const { upvotes, downvotes } = tutorialDoc.data();
+      const { upvotes, downvotes } = itemDoc.data();
 
       dispatch({
         type: actions.UPDATE_DOWNVOTE_SUCCESS,
-        payload: { tutorialId, upvotes, downvotes }
+        payload: { itemId, itemType, upvotes, downvotes }
       });
     } catch (error) {
       dispatch({ type: actions.UPDATE_DOWNVOTE_FAIL, payload: error.message });
@@ -643,40 +649,41 @@ export const updateDownvote =
   };
 
 export const undoVote =
-  (userId, tutorialId, value) => async (firebase, firestore, dispatch) => {
+  (userId, itemId, itemType, value) =>
+  async (firebase, firestore, dispatch) => {
     try {
       if (value == 1) {
         //undo the upvote
         await firestore
-          .collection("tutorials")
-          .doc(tutorialId)
+          .collection(`${itemType}s`)
+          .doc(itemId)
           .update({
             upvotes: firebase.firestore.FieldValue.increment(-1)
           });
       } else if (value == -1) {
         // undo the downvote
         await firestore
-          .collection("tutorials")
-          .doc(tutorialId)
+          .collection(`${itemType}s`)
+          .doc(itemId)
           .update({
             downvotes: firebase.firestore.FieldValue.increment(-1)
           });
       }
       await firestore
-        .collection("tutorial_likes")
-        .doc(`${userId}_${tutorialId}`)
+        .collection(`${itemType}_likes`)
+        .doc(`${userId}_${itemId}`)
         .delete();
 
-      const tutorialDoc = await firestore
-        .collection("tutorials")
-        .doc(tutorialId)
+      const itemDoc = await firestore
+        .collection(`${itemType}s`)
+        .doc(itemId)
         .get();
 
-      const { upvotes, downvotes } = tutorialDoc.data();
+      const { upvotes, downvotes } = itemDoc.data();
 
       dispatch({
         type: actions.UNDO_VOTE_SUCCESS,
-        payload: { tutorialId, upvotes, downvotes }
+        payload: { itemId, itemType, upvotes, downvotes }
       });
     } catch (error) {
       dispatch({ type: actions.UNDO_VOTE_FAIL, payload: error.message });
