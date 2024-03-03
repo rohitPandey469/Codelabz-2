@@ -29,6 +29,9 @@ import {
   getCommentReply,
   addComment
 } from "../../../../store/actions/tutorialPageActions";
+import handleLike from "../../../../services/likeService";
+import handleDislike from "../../../../services/dislikeService";
+import { checkExistingFeedback, getVotesData } from "../../../../store/actions";
 const useStyles = makeStyles(() => ({
   container: {
     margin: "10px 0",
@@ -56,10 +59,11 @@ const Comment = ({ id }) => {
   const classes = useStyles();
   const [showReplyfield, setShowReplyfield] = useState(false);
   const [alignment, setAlignment] = React.useState("left");
-  const [count, setCount] = useState(1);
+  const [feedback, setFeedback] = useState(0);
   const firestore = useFirestore();
   const firebase = useFirebase();
   const dispatch = useDispatch();
+  const userId = useSelector(state => state.firebase.auth.uid);
   useState(() => {
     getCommentData(id)(firebase, firestore, dispatch);
   }, [id]);
@@ -73,6 +77,7 @@ const Comment = ({ id }) => {
   );
 
   const [data] = commentsArray.filter(comment => comment.comment_id == id);
+  console.log("Data from Comment.jsx", data);
 
   const repliesArray = useSelector(
     ({
@@ -84,17 +89,37 @@ const Comment = ({ id }) => {
 
   const [replies] = repliesArray.filter(replies => replies.comment_id == id);
 
-  const handleIncrement = () => {
-    setCount(count + 1);
+  const handleIncrement = async () => {
+    await handleLike(
+      firebase,
+      firestore,
+      dispatch,
+      data?.comment_id,
+      "comment"
+    );
   };
 
-  const handleDecrement = () => {
-    setCount(count - 1);
+  const handleDecrement = async () => {
+    await handleDislike(
+      firebase,
+      firestore,
+      dispatch,
+      data?.comment_id,
+      "comment"
+    );
   };
 
   const handleAlignment = (event, newAlignment) => {
     setAlignment(newAlignment);
   };
+
+  useEffect(() => {
+    getVotesData(data?.comment_id, "comment")(firebase, firestore, dispatch);
+  }, [firebase, firestore, dispatch, data]);
+
+  const votes = useSelector(
+    state => state.tutorials.vote.votes[data?.comment_id] || {}
+  );
 
   const handleSubmit = comment => {
     const commentData = {
@@ -102,10 +127,26 @@ const Comment = ({ id }) => {
       replyTo: data.comment_id,
       tutorial_id: data.tutorial_id,
       createdAt: firestore.FieldValue.serverTimestamp(),
-      userId: "codelabzuser"
+      userId: "codelabzuser",
+      upvotes: 0,
+      downvotes: 0
     };
     addComment(commentData)(firebase, firestore, dispatch);
   };
+
+  useEffect(() => {
+    const fetchFeedback = async () => {
+      const get_feedback = await checkExistingFeedback(
+        userId,
+        data?.comment_id,
+        "comment_likes"
+      )(firebase, firestore, dispatch);
+      if (get_feedback != undefined) {
+        setFeedback(get_feedback);
+      }
+    };
+    fetchFeedback();
+  }, [firebase, firestore, dispatch, data, votes]);
 
   return (
     data && (
@@ -142,17 +183,20 @@ const Comment = ({ id }) => {
                   onClick={handleIncrement}
                   value="left"
                   aria-label="left aligned"
+                  selected={feedback === 1 ? true : false}
                 >
                   <KeyboardArrowUpIcon />
-                  <span>{count}</span>
+                  <span>{votes?.upvotes}</span>
                 </ToggleButton>
                 <ToggleButton
                   className={classes.small}
                   onClick={handleDecrement}
                   value="center"
                   aria-label="centered"
+                  selected={feedback === -1 ? true : false}
                 >
                   <KeyboardArrowDownIcon />
+                  <span>{votes?.downvotes == 0 ? "" : votes.downvotes}</span>
                 </ToggleButton>
               </ToggleButtonGroup>
               <IconButton aria-label="share" data-testId="MoreIcon">

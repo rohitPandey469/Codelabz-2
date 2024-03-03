@@ -23,10 +23,7 @@ import { useFirebase, useFirestore } from "react-redux-firebase";
 import { getUserProfileData } from "../../store/actions";
 import handleLike from "../../services/likeService";
 import handleDislike from "../../services/dislikeService";
-import {
-  checkExistingFeedback,
-  getVotesData
-} from "../../store/actions/tutorialsActions";
+import { checkExistingFeedback,getVotesData } from "../../store/actions";
 const useStyles = makeStyles(theme => ({
   root: {
     margin: "0.5rem",

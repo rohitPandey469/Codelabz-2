@@ -25,7 +25,7 @@ import { getUserProfileData } from "../../store/actions";
 import {
   checkExistingFeedback,
   getVotesData
-} from "../../store/actions/tutorialsActions";
+} from "../../store/actions";
 import handleDislike from "../../services/dislikeService";
 import handleLike from "../../services/likeService";
 
