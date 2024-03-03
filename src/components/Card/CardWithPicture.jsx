@@ -22,10 +22,7 @@ import { Link } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { useFirebase, useFirestore } from "react-redux-firebase";
 import { getUserProfileData } from "../../store/actions";
-import {
-  checkExistingFeedback,
-  getVotesData
-} from "../../store/actions";
+import { checkExistingFeedback, getVotesData } from "../../store/actions";
 import handleDislike from "../../services/dislikeService";
 import handleLike from "../../services/likeService";
 
