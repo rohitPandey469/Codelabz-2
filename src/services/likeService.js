@@ -3,15 +3,12 @@ import {
   undoVote,
   updateUpvote
 } from "../store/actions";
-import { useHistory } from "react-router-dom";
 
 const handleLike = async (firebase, firestore, dispatch, tutorialId) => {
   try {
     const currentUser = firebase.auth().currentUser;
     const userId = currentUser.uid;
-    const history = useHistory();
     if (!currentUser) {
-      history.push("/login");
       return;
     }
     const existingFeedback = await checkExistingFeedback(userId, tutorialId)(
