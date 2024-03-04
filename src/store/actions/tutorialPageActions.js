@@ -169,19 +169,22 @@ export const getCommentData =
 export const getCommentReply =
   commentId => async (firebase, firestore, dispatch) => {
     try {
-      console.log("commentId", commentId);
       dispatch({ type: actions.GET_REPLIES_START });
-      console.log("Get replies");
-      const replies = await firestore
+      let replies = [];
+      await firestore
         .collection("cl_comments")
         .where("replyTo", "==", commentId)
         .get()
-        .then(querySnapshot => {
-          let data = [];
-          querySnapshot.forEach(doc => {
-            data.push(doc.data().comment_id);
+        .then(function (querySnapshot) {
+          querySnapshot.forEach(function (doc) {
+            let commentData = doc.data();
+            if (commentData && commentData.comment_id) {
+              replies.push(commentData);
+            }
           });
-          return data;
+        })
+        .catch(function (error) {
+          console.error("Error fetching replies:", error);
         });
       dispatch({
         type: actions.GET_REPLIES_SUCCESS,
@@ -195,26 +198,54 @@ export const getCommentReply =
 export const addComment = comment => async (firebase, firestore, dispatch) => {
   try {
     dispatch({ type: actions.ADD_COMMENT_START });
-    await firestore
-      .collection("cl_comments")
-      .add(comment)
-      .then(docref => {
-        firestore.collection("cl_comments").doc(docref.id).update({
-          comment_id: docref.id
+    const docRef = await firestore.collection("cl_comments").add(comment);
+    const commentId = docRef.id;
+
+    await firestore.collection("cl_comments").doc(commentId).update({
+      comment_id: commentId
+    });
+
+    if (comment.replyTo === comment.tutorial_id) {
+      // A comment added
+      await firestore
+        .collection("tutorials")
+        .doc(comment.tutorial_id)
+        .update({
+          comments: firebase.firestore.FieldValue.arrayUnion(commentId)
         });
-        if (comment.replyTo == comment.tutorial_id) {
-          firestore
-            .collection("tutorials")
-            .doc(comment.tutorial_id)
-            .update({
-              comments: firebase.firestore.FieldValue.arrayUnion(docref.id)
-            });
-        }
-      })
-      .then(() => {
-        dispatch({ type: actions.ADD_COMMENT_SUCCESS });
+    } else {
+      // A reply added
+      const data = await firestore
+        .collection("cl_comments")
+        .doc(commentId)
+        .get();
+      const commentData = data.data();
+      let replies = [];
+      await firestore
+        .collection("cl_comments")
+        .where("replyTo", "==", commentId)
+        .get()
+        .then(function (querySnapshot) {
+          querySnapshot.forEach(function (doc) {
+            let commentData = doc.data();
+            if (commentData && commentData.comment_id) {
+              replies.push(commentData);
+            }
+          });
+        })
+        .catch(function (error) {
+          console.error("Error fetching replies:", error);
+        });
+      replies.push(commentData);
+      dispatch({
+        type: actions.ADD_REPLY_SUCCESS,
+        payload: { replies, comment_id: comment.replyTo }
       });
-  } catch (e) {
-    dispatch({ type: actions.ADD_COMMENT_FAILED, payload: e.message });
+    }
+
+    await getTutorialData(comment.tutorial_id)(firebase, firestore, dispatch);
+    dispatch({ type: actions.ADD_COMMENT_SUCCESS });
+  } catch (error) {
+    dispatch({ type: actions.ADD_COMMENT_FAILED, payload: error.message });
   }
 };

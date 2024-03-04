@@ -13,13 +13,7 @@ import ToggleButton from "@mui/lab/ToggleButton";
 import ToggleButtonGroup from "@mui/lab/ToggleButtonGroup";
 import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
-import React, {
-  useState,
-  useEffect,
-  useCallback,
-  useMemo,
-  useRef
-} from "react";
+import React, { useState } from "react";
 import Textbox from "./Textbox";
 import User from "../UserDetails";
 import { useDispatch, useSelector } from "react-redux";
@@ -164,8 +158,8 @@ const Comment = ({ id }) => {
         {showReplyfield && (
           <div style={{ margin: "10px 0 0 10px" }}>
             <Textbox type="reply" handleSubmit={handleSubmit} />
-            {replies?.replies.map((id, index) => {
-              return <Comment id={id} />;
+            {replies?.replies.map((reply, index) => {
+              return <Comment id={reply.comment_id} key={index} />;
             })}
           </div>
         )}

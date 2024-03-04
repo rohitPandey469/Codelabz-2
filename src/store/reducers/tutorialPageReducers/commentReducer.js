@@ -62,6 +62,33 @@ const CommentReducer = (state = initialState, { type, payload }) => {
         error: payload
       };
 
+    case actions.ADD_REPLY_SUCCESS:
+      const index = state.replies.findIndex(
+        reply => reply.comment_id === payload.comment_id
+      );
+
+      if (index !== -1) {
+        const updatedReplies = [...state.replies];
+        updatedReplies[index] = {
+          ...updatedReplies[index],
+          replies: [...updatedReplies[index].replies, ...payload.replies]
+        };
+        return {
+          ...state,
+          loading: false,
+          replies: updatedReplies
+        };
+      }
+
+      return {
+        ...state,
+        loading: false,
+        replies: [
+          ...state.replies,
+          { comment_id: payload.comment_id, replies: payload.replies }
+        ]
+      };
+
     default:
       return state;
   }

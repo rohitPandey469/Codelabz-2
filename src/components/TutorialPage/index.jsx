@@ -34,7 +34,7 @@ function TutorialPage({ background = "white", textColor = "black" }) {
     getTutorialData(id)(firebase, firestore, dispatch);
     getTutorialSteps(id)(firebase, firestore, dispatch);
     return () => {};
-  }, []);
+  }, [firebase, firestore, dispatch]);
   const tutorial = useSelector(
     ({
       tutorialPage: {
