@@ -8,6 +8,7 @@ const initialState = {
 };
 
 const CommentReducer = (state = initialState, { type, payload }) => {
+  let index, updatedReplies;
   switch (type) {
     case actions.GET_COMMENT_DATA_START:
       return {
@@ -63,12 +64,12 @@ const CommentReducer = (state = initialState, { type, payload }) => {
       };
 
     case actions.ADD_REPLY_SUCCESS:
-      const index = state.replies.findIndex(
+      index = state.replies.findIndex(
         reply => reply.comment_id === payload.comment_id
       );
 
       if (index !== -1) {
-        const updatedReplies = [...state.replies];
+        updatedReplies = [...state.replies];
         updatedReplies[index] = {
           ...updatedReplies[index],
           replies: [...updatedReplies[index].replies, ...payload.replies]
