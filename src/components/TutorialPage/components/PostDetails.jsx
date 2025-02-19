@@ -84,7 +84,7 @@ const PostDetails = ({ details }) => {
             </Box>
             <Box sx={{ width: "100%", marginTop: "10px" }}>
               <Grid container justifyContent="space-between" alignItems="end">
-                <User id={details?.user} timestamp={details?.published_on} />
+                <User id={details?.uid} timestamp={details?.published_on} />
 
                 <Grid item sx={{ width: "fit-content" }}>
                   <CardActions className={classes.settings} disableSpacing>

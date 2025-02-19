@@ -7,6 +7,7 @@ import { useFirebase, useFirestore } from "react-redux-firebase";
 import { getUserProfileData } from "../../../store/actions";
 import { isUserFollower } from "../../../store/actions/profileActions";
 import { addUserFollower } from "../../../store/actions";
+import { Link } from "react-router-dom";
 
 const useStyles = makeStyles(() => ({
   container: {
@@ -28,9 +29,8 @@ const User = ({ id, timestamp, size }) => {
   const firestore = useFirestore();
   const [isFollowed, setIsFollowed] = useState(true);
   useEffect(() => {
-    getUserProfileData(id)(firebase, firestore, dispatch);
-    return () => {};
-  }, [id]);
+      getUserProfileData(id)(firebase, firestore, dispatch);
+  }, [id, firebase, firestore, dispatch]);
 
   const profileData = useSelector(({ firebase: { profile } }) => profile);
 
@@ -42,6 +42,7 @@ const User = ({ id, timestamp, size }) => {
     }) => data
   );
 
+  console.log("profileData", user);
   useEffect(() => {
     const checkIsFollowed = async () => {
       const status = await isUserFollower(
@@ -67,6 +68,9 @@ const User = ({ id, timestamp, size }) => {
 
   const showFollowButton = profileData?.uid !== user?.uid;
 
+  // const userProfileLink = `/profile/${user?.uid}`
+  const userProfileLink = '/profile'
+
   return (
     <>
       <Grid
@@ -77,30 +81,34 @@ const User = ({ id, timestamp, size }) => {
         columnSpacing={1}
         xs={6}
       >
-        <Grid sx={{ height: "100%", width: "auto" }} item>
-          <Avatar
-            sx={{
-              height: size == "sm" ? "24px" : "40px",
-              width: size == "sm" ? "24px" : "40px"
-            }}
-          >
-            {user?.photoURL && user?.photoURL.length > 0 ? (
-              <img src={user?.photoURL} />
-            ) : (
-              user?.displayName[0]
-            )}
-          </Avatar>
+        <Grid sx={{ height: "100%", width: "auto"}} item>
+          <Link to={userProfileLink}>
+            <Avatar
+              sx={{
+                height: size == "sm" ? "24px" : "40px",
+                width: size == "sm" ? "24px" : "40px"
+              }}
+            >
+              {user?.photoURL && user?.photoURL.length > 0 ? (
+                <img src={user?.photoURL} />
+              ) : (
+                user?.displayName?.charAt(0).toUpperCase()
+              )}
+            </Avatar>
+          </Link>
         </Grid>
         <Grid item sx={{ width: "fit-content" }}>
-          <Typography
-            sx={{
-              fontSize: size == "sm" ? "14px" : "16px"
-            }}
-          >
-            <span className={classes.bold} data-testId="tutorialpageAuthorName">
-              {user?.displayName}
-            </span>
-          </Typography>
+          <Link to={userProfileLink}>
+            <Typography
+              sx={{
+                fontSize: size == "sm" ? "14px" : "16px"
+              }}
+            >
+              <span className={classes.bold} data-testId="tutorialpageAuthorName">
+                {user?.displayName}
+              </span>
+            </Typography>
+          </Link>
           <Typography
             sx={{
               fontSize: size == "sm" ? "10px" : "12px",
@@ -119,7 +127,7 @@ const User = ({ id, timestamp, size }) => {
                 borderRadius: "50px",
                 height: "20px",
                 textTransform: "none",
-                padding: "1px 10px"
+                padding: "1px 10px",
               }}
             >
               {isFollowed ? "Following" : "Follow +"}
