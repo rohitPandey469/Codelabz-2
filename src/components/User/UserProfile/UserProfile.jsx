@@ -15,6 +15,7 @@ import {
   getTutorialFeedData,
   getTutorialFeedIdArray
 } from "../../../store/actions/tutorialPageActions";
+import { getUserFollowers } from "../../../store/actions/profileActions";
 
 const useStyles = makeStyles(theme => ({
   parentBody: {
@@ -61,6 +62,8 @@ function UserProfile(props) {
   const dispatch = useDispatch();
   getTutorialFeedData;
 
+  // Fetch All the Followers List of Ids only when clicked at followers btn or fetch initiall
+  const [followers, setFollowers] = useState([]);
   const profileData = useSelector(({ firebase: { profile } }) => profile);
 
   useEffect(() => {
@@ -74,6 +77,21 @@ function UserProfile(props) {
     };
     getFeed();
   }, []);
+
+  useEffect(() => {
+    const fetchFollowers = async () => {
+      try {
+        const followersData = await getUserFollowers(
+          props.profileData.uid,
+          firestore
+        );
+        setFollowers(followersData);
+      } catch (error) {
+        console.error("Error fetching user's followers:", error);
+      }
+    };
+    fetchFollowers();
+  }, [profileData]);
 
   const tutorials = useSelector(
     ({
@@ -118,7 +136,7 @@ function UserProfile(props) {
                 story={
                   "Lorem ipsum dolor sit amet, consectetuer adipiscing elit"
                 }
-                followers={402}
+                followers={followers}
                 following={40}
               />
             </Card>

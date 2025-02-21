@@ -189,6 +189,38 @@ export const clearUserProfile = () => dispatch => {
   dispatch({ type: actions.CLEAR_USER_PROFILE_DATA_STATE });
 };
 
+export const getUserFollowers = async (user_id, firestore) => {
+  try {
+    const querySnapshot = await firestore
+      .collection("user_followers")
+      .where("followingId", "==", user_id)
+      .get();
+
+    const followers = [];
+
+    querySnapshot.forEach(async doc => {
+      const followerId = doc.data().followerId;
+      const userDoc = await firestore
+        .collection("cl_user")
+        .doc(followerId)
+        .get();
+      if (userDoc.exists) {
+        const userData = userDoc.data();
+        followers.push({
+          uid: followerId,
+          displayName: userData.displayName,
+          photoURL: userData.photoURL
+        });
+      }
+    });
+
+    return followers;
+  } catch (error) {
+    console.error("Error fetching user followers:", error);
+    throw error;
+  }
+};
+
 export const isUserFollower = async (followerId, followingId, firestore) => {
   const followerDoc = await firestore
     .collection("user_followers")
