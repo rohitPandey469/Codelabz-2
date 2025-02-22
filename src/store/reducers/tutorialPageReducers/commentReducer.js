@@ -8,6 +8,7 @@ const initialState = {
 };
 
 const CommentReducer = (state = initialState, { type, payload }) => {
+  let index, updatedReplies;
   switch (type) {
     case actions.GET_COMMENT_DATA_START:
       return {
@@ -60,6 +61,33 @@ const CommentReducer = (state = initialState, { type, payload }) => {
         ...state,
         loading: false,
         error: payload
+      };
+
+    case actions.ADD_REPLY_SUCCESS:
+      index = state.replies.findIndex(
+        reply => reply.comment_id === payload.comment_id
+      );
+
+      if(index !== -1){
+        updatedReplies = [...state.replies];
+        updatedReplies[index] = {
+          ...updatedReplies[index],
+          replies: [...updatedReplies[index].replies, ...payload.replies]
+        };
+        return {
+          ...state,
+          loading: false,
+          replies: updatedReplies
+        };
+      }
+
+      return {
+        ...state,
+        loading: false,
+        replies: [
+          ...state.replies,
+          { comment_id: payload.comment_id, replies: payload.replies }
+        ]
       };
 
     default:

@@ -175,20 +175,23 @@ export const getCommentData =
 export const getCommentReply =
   commentId => async (firebase, firestore, dispatch) => {
     try {
-      console.log("commentId", commentId);
       dispatch({ type: actions.GET_REPLIES_START });
-      console.log("Get replies");
-      const replies = await firestore
+      let replies = [];
+      await firestore
         .collection("cl_comments")
         .where("replyTo", "==", commentId)
         .get()
         .then(querySnapshot => {
-          let data = [];
           querySnapshot.forEach(doc => {
-            data.push(doc.data().comment_id);
+            let commentData = doc.data();
+            if (commentData && commentData.comment_id) {
+              replies.push(commentData);
+            }
           });
-          return data;
-        });
+        })
+        .catch(e => {
+          console.error("Error fetching replies: ", e);
+        })
       dispatch({
         type: actions.GET_REPLIES_SUCCESS,
         payload: { replies, comment_id: commentId }
@@ -203,18 +206,50 @@ export const addComment = comment => async (firebase, firestore, dispatch) => {
     dispatch({ type: actions.ADD_COMMENT_START });
 
     const docref = await firestore.collection("cl_comments").add(comment);
-
-    await firestore.collection("cl_comments").doc(docref.id).update({
-      comment_id: docref.id
+    const commentId = docref.id;
+    await firestore.collection("cl_comments").doc(commentId).update({
+      comment_id: commentId
     });
 
     if (comment.replyTo === comment.tutorial_id) {
+      // comment added
       await firestore
         .collection("tutorials")
         .doc(comment.tutorial_id)
         .update({
-          comments: firebase.firestore.FieldValue.arrayUnion(docref.id)
+          comments: firebase.firestore.FieldValue.arrayUnion(commentId)
         });
+    } else {
+      // reply added
+      const data = await firestore
+        .collection("cl_comments")
+        .doc(commentId)
+        .get()
+      
+      const commentData = data.data();
+      let replies = []
+      await firestore
+        .collection("cl_comments")
+        .where("replyTo", "==", commentId)
+        .get()
+        .then(querySnapshot => {
+          querySnapshot.forEach(doc => {
+            let commentData = doc.data();
+            if (commentData && commentData.comment_id) {
+              replies.push(commentData);
+            }
+          });
+        })
+        .catch(e => {
+          console.error("Error fetching replies: ", e);
+        })
+        replies.push(commentData);
+        dispatch({
+          type: actions.ADD_REPLY_SUCCESS,
+          payload: { replies, comment_id: comment.replyTo }
+        });
+        await getTutorialData(comment.tutorial_id)(firebase, firestore, dispatch);
+        dispatch({ type: actions.ADD_COMMENT_SUCCESS });
     }
 
     dispatch({ type: actions.ADD_COMMENT_SUCCESS });

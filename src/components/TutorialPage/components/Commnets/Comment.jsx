@@ -123,8 +123,8 @@ const Comment = ({ id }) => {
         {showReplyfield && (
           <div style={{ margin: "10px 0 0 10px" }}>
             <Textbox type="reply" handleSubmit={handleSubmit} />
-            {replies?.replies.map((id, index) => {
-              return <Comment key={index} id={id} />;
+            {replies?.replies.map((reply, index) => {
+              return <Comment key={index} id={reply.comment_id} />;
             })}
           </div>
         )}
